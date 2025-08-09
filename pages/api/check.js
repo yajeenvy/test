@@ -27,10 +27,23 @@ export default async function handler(req, res) {
     }
 
     const doc = await db.collection('authorized_hwids').doc(hwid).get()
+    
+    if (!doc.exists) {
+      return res.status(200).json({ 
+        access_granted: false,
+        reason: "HWID not found in database"
+      })
+    }
+
+    const data = doc.data()
+    const isActive = data.is_active === true // Явная проверка на true
+    
     res.status(200).json({ 
-      access_granted: doc.exists,
-      hwid: hwid
+      access_granted: isActive,
+      hwid: hwid,
+      details: isActive ? "Access granted" : "HWID is not active"
     })
+
   } catch (error) {
     console.error('Firebase Error:', error)
     res.status(500).json({ 
